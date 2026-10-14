@@ -26,7 +26,7 @@ void Simulation::step(BodiesView b, double dt) {
 double Simulation::kineticEnergy(BodiesView b) {
     double K = 0.0;
     for(size_t i = 0; i < b.size(); ++i) {
-        K += 0.5 * b.m[i] * (b.vx[i] * b.vx[i] + b.vy[i]*b.vy[i]);
+        K += 0.5 * b.m[i] * (b.vel[i].x * b.vel[i].x + b.vel[i].y * b.vel[i].y);
     }
     return K;
 

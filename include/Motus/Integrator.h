@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <algorithm>
 
 #include "Motus/Bodies.h"
 
@@ -24,10 +25,8 @@ class Integrator {
     protected:
         static void evaluate(BodiesView b, const ForcesFn& f, Accel& out) {
             out.resize(b.size());
-            out.zero();
-            f(b, out.view());
+            std::ranges::fill(out, glm::dvec3{0, 0, 0});
+            f(b, {out});
         }
-
-        
 };
 }

@@ -5,6 +5,7 @@
 
 namespace motus {
 
+
 enum class Forces : std::uint32_t {
     None    = 0,
     Gravity = 1u << 1

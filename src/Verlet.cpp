@@ -14,15 +14,13 @@ void Verlet::step(BodiesView b, const ForcesFn &f, double dt) {
     }
 
     for(size_t i = 0; i < n; ++i) {
-        b.x[i] += b.vx[i] * dt + (m_acc.ax[i]*dt*dt) / (2);
-        b.y[i] += b.vy[i] * dt + (m_acc.ay[i]*dt*dt) / (2);
+        b.pos[i] += b.vel[i] * dt + (m_acc[i]*dt*dt) * 0.5;
     }
 
     evaluate(b, f ,m_accNew);
 
     for(size_t i = 0; i < n; ++i) {
-        b.vx[i] += 0.5 * (m_acc.ax[i] + m_accNew.ax[i]) * dt;
-        b.vy[i] += 0.5 * (m_acc.ay[i] + m_accNew.ay[i]) * dt;
+        b.vel[i] += 0.5 * (m_acc[i] + m_accNew[i]) * dt;
     }
 
     std::swap(m_acc, m_accNew);

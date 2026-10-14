@@ -3,18 +3,14 @@
 #include "Bodies.h"
 
 namespace motus {
-    
-struct GravityParams {
-    double G  = 1.0;
-    double eps = 1e-3;
-};
-
-void computeGravity(const BodiesView& b, const GravityParams& p, Accel& out);
-double totalEnergy(const BodiesView& b, const GravityParams& p);
-
 
 class Gravity {
     public:
+        enum class Algorithm {
+            DIRCET_NEWTON,
+            BARNES_HUT
+        };
+
         //Constructors
         Gravity() = default;
         Gravity(double G, double eps);
@@ -29,25 +25,33 @@ class Gravity {
         ~Gravity() = default;
 
         //Core functions
-        void compute(BodiesView b, AccelView out) const;
+        void compute(BodiesView b, std::span<glm::dvec3> out) const;
         [[nodiscard]] double potentialEnergy(BodiesView b) const;
         
         //Setters
-        void setG       (double newG);
-        void resetG     ();
-        void setEps     (double newEps);
-        void resetEps   ();
+        void setG           (double newG);
+        void resetG         ();
+        void setEps         (double newEps);
+        void resetEps       ();
+        void setAlgorithm   (Algorithm newAlgo);
 
         //Getters
         [[nodiscard]] double G()    const noexcept;
         [[nodiscard]] double eps()  const noexcept;
 
-
     private:
         static constexpr double     s_defaultG      = 6.674e-11;
         static constexpr double     s_defaultEps    = 1e-3;
+        static constexpr double     s_defaultTheta  = 0.5;
         double                      m_G             = s_defaultG;
         double                      m_eps           = s_defaultEps;
+        double                      m_theta         = s_defaultTheta;
+        Algorithm                   m_algo          = Algorithm::DIRCET_NEWTON;
+        
+
+        //Private function
+        void directNewton(BodiesView b, AccelView out) const;
+        void barnesHut(BodiesView b, AccelView out) const;
 };
 
 }
