@@ -34,10 +34,13 @@ class Gravity {
         void setEps         (double newEps);
         void resetEps       ();
         void setAlgorithm   (Algorithm newAlgo);
+        void setTheta       (double newTheta);
+        void resetTheta     ();
 
         //Getters
-        [[nodiscard]] double G()    const noexcept;
-        [[nodiscard]] double eps()  const noexcept;
+        [[nodiscard]] double G()        const noexcept;
+        [[nodiscard]] double eps()      const noexcept;
+        [[nodiscard]] double theta()    const noexcept;
 
     private:
         static constexpr double     s_defaultG      = 6.674e-11;
@@ -46,7 +49,7 @@ class Gravity {
         double                      m_G             = s_defaultG;
         double                      m_eps           = s_defaultEps;
         double                      m_theta         = s_defaultTheta;
-        Algorithm                   m_algo          = Algorithm::DIRCET_NEWTON;
+        Algorithm                   m_algo          = Algorithm::BARNES_HUT;
         
 
         //Private function

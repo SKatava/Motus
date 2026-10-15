@@ -1,24 +1,38 @@
 #include "Motus/BarnesHutTree.h"
 
-#include <glm/glm.hpp>
+#include "Motus/ScopeTimer.h"
 
+#include <glm/glm.hpp>
 #include <cmath>
-#include <iostream>
+
 
 namespace motus {
 
 BarnesHutTree::BarnesHutTree(BodiesView b) : m_bodies(b) {
     m_nodes.reserve(4 * m_bodies.size() + 8);
     m_nodes.emplace_back();
-    m_nodes[0].size   = 1000.f;
-    m_nodes[0].center = glm::vec3(500.f, 500.f, 500.f);
+
+    glm::dvec3 max (b.pos[0]);
+    glm::dvec3 min (b.pos[0]);
+    
+    for(const auto& p : b.pos) {
+        min = glm::min(min, p);
+        max = glm::max(max, p);
+    }
+
+    glm::dvec3 diff = max - min;
+
+    m_nodes[0].size   = glm::max(diff.x, glm::max(diff.y, diff.z)) * 1.01 +1e-9;
+    m_nodes[0].center = (min + max) * 0.5;
 }
 
 void BarnesHutTree::build() {
+    {ScopeTimer t {"inserting nodes: "};
     for(size_t i = 0; i < m_bodies.size(); ++i) {
         insertToNode(i, 0);
     }
-    accumulateMass(0);
+    }
+    {ScopeTimer t {"Accumulate mass: "}; accumulateMass(0);}
 }
 
 void BarnesHutTree::insertToNode(int bodyIndex, int nodeIndex) {

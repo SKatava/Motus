@@ -4,6 +4,7 @@
 
 #include "Force.h"
 #include "Integrator.h"
+#include "ScopeTimer.h"
 
 namespace motus {
 

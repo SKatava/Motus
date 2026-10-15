@@ -11,6 +11,7 @@ set(CMAKE_CXX_EXTENSIONS        OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_library(${NAME} STATIC)
+
 target_sources(${NAME} PRIVATE
     src/Gravity.cpp
     src/Simulation.cpp
@@ -20,13 +21,15 @@ target_sources(${NAME} PRIVATE
 )
 
 add_subdirectory(external)
+add_subdirectory(examples)
 
 target_link_libraries(${NAME} PUBLIC glm)
+
+find_package(OpenMP REQUIRED)
+target_link_libraries(${NAME} PRIVATE OpenMP::OpenMP_CXX)
 
 target_include_directories(${NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_options(${NAME} PRIVATE -Wall -Wextra -Wpedantic)
 
-add_executable(two_body examples/two_body.cpp)
-target_link_libraries(two_body PRIVATE ${NAME})
 
 
