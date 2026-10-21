@@ -49,7 +49,7 @@ class Gravity {
         double                      m_G             = s_defaultG;
         double                      m_eps           = s_defaultEps;
         double                      m_theta         = s_defaultTheta;
-        Algorithm                   m_algo          = Algorithm::BARNES_HUT;
+        Algorithm                   m_algo          = Algorithm::DIRCET_NEWTON;
         
 
         //Private function

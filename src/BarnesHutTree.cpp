@@ -1,6 +1,6 @@
 #include "Motus/BarnesHutTree.h"
 
-#include "Motus/ScopeTimer.h"
+#include "Motus/Profiler.h"
 
 #include <glm/glm.hpp>
 #include <cmath>
@@ -27,12 +27,16 @@ BarnesHutTree::BarnesHutTree(BodiesView b) : m_bodies(b) {
 }
 
 void BarnesHutTree::build() {
-    {ScopeTimer t {"inserting nodes: "};
-    for(size_t i = 0; i < m_bodies.size(); ++i) {
-        insertToNode(i, 0);
+    {
+        PROFILE_SCOPE("bh/build");
+        for(size_t i = 0; i < m_bodies.size(); ++i) {
+            insertToNode(i, 0);
+        }
     }
+    {
+        PROFILE_SCOPE("bh/accumulate"); 
+        accumulateMass(0);
     }
-    {ScopeTimer t {"Accumulate mass: "}; accumulateMass(0);}
 }
 
 void BarnesHutTree::insertToNode(int bodyIndex, int nodeIndex) {

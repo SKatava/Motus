@@ -4,7 +4,7 @@
 
 #include "Force.h"
 #include "Integrator.h"
-#include "ScopeTimer.h"
+#include "Profiler.h"
 
 namespace motus {
 
@@ -29,7 +29,10 @@ class Simulation {
 
         //Setters
         
+        
         //Getters
+        [[nodiscard]]       Gravity& gravity() noexcept;
+        [[nodiscard]] const Gravity& gravity() const noexcept;
 
     private:
         ForceSet                    m_forceSet;

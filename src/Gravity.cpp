@@ -2,7 +2,7 @@
 #include <cmath>
 
 #include "Motus/BarnesHutTree.h"
-#include "Motus/ScopeTimer.h"
+#include "Motus/Profiler.h"
 
 namespace motus {
 
@@ -52,11 +52,12 @@ double Gravity::potentialEnergy(BodiesView b) const {
 void Gravity::barnesHut(BodiesView b, AccelView out) const {
     BarnesHutTree tree(b);
     tree.build();
-    {ScopeTimer t {"tranversing nodes: "};
-    #pragma omp parallel for schedule(dynamic, 64)
-    for(size_t i = 0; i < b.size(); ++i) {
-        out[i] = tree.traverseNode(i, 0, m_theta, m_G, m_eps) / b.m[i];
-    }
+    {
+        PROFILE_SCOPE("bh/traverse");
+        #pragma omp parallel for schedule(dynamic, 64)
+        for(size_t i = 0; i < b.size(); ++i) {
+            out[i] = tree.traverseNode(i, 0, m_theta, m_G, m_eps) / b.m[i];
+        }
     }
 }
 

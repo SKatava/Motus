@@ -36,4 +36,7 @@ double Simulation::totalEnergy(BodiesView b) {
     return kineticEnergy(b) + m_forceSet.potentialEnergy(b); 
 }
 
+Gravity& Simulation::gravity() noexcept { return m_forceSet.gravity; }
+const Gravity& Simulation::gravity() const noexcept { return m_forceSet.gravity;} 
+
 }

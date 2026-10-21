@@ -20,6 +20,9 @@ target_sources(${NAME} PRIVATE
     src/BarnesHutTree.cpp
 )
 
+
+target_compile_definitions(${NAME} PUBLIC MOTUS_PROFILE)
+
 add_subdirectory(external)
 add_subdirectory(examples)
 
@@ -30,6 +33,7 @@ target_link_libraries(${NAME} PRIVATE OpenMP::OpenMP_CXX)
 
 target_include_directories(${NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_options(${NAME} PRIVATE -Wall -Wextra -Wpedantic)
+target_compile_definitions(${NAME} PUBLIC MOTUS_PROFILE)
 
 
 

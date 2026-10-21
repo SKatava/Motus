@@ -20,20 +20,21 @@ void generateBodies(size_t n, Bodies& b) {
         b.vel.push_back({real(gen), real(gen), real(gen)});
         b.m.push_back(1);
     }
-
-}
+    }
 
 int main(void) {
     Bodies b;
-    generateBodies(100'000, b);
+    generateBodies(10'000, b);
 
     motus::Simulation sim;
+    sim.gravity().setAlgorithm(motus::Gravity::Algorithm::BARNES_HUT);
     size_t step = 1;
+    
 
     for(;;) {
-        {motus::ScopeTimer t{"sim step: "}; sim.step({b.pos, b.vel, b.m}, 0.1);}
+        {PROFILE_SCOPE("sim"); sim.step({b.pos, b.vel, b.m}, 0.1);}
         if(step++ % 100 == 0) {
-            std::cout << "E: " << sim.totalEnergy({b.pos, b.vel, b.m}) << "\n";
+            motus::Profiler::get().report();
         }
     }
 
