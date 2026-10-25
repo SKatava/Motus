@@ -26,7 +26,7 @@ int main(void) {
     Bodies b;
     generateBodies(10'000, b);
 
-    motus::Simulation sim;
+    motus::Simulation sim(motus::IntegratorMethod::VERLET);
     sim.gravity().setAlgorithm(motus::Gravity::Algorithm::BARNES_HUT);
     size_t step = 1;
     

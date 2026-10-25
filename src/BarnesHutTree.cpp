@@ -132,7 +132,8 @@ glm::dvec3 BarnesHutTree::traverseNode(int bodyIndex, int nodeIndex, double thet
     else if(m_nodes[nodeIndex].firstChild != -1) {
         const double d = std::sqrt(d2);
 
-        if(m_nodes[nodeIndex].size / d < theta) {
+        glm::dvec3 r = m_bodies.pos[bodyIndex] - m_nodes[nodeIndex].center;
+        if( (m_nodes[nodeIndex].size / d < theta) && (glm::dot(r, r) > m_nodes[nodeIndex].size * m_nodes[nodeIndex].size)) {
             return G * m_nodes[nodeIndex].mass * m_bodies.m[bodyIndex] * invD3 * diff;
         }
 

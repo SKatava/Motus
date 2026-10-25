@@ -9,7 +9,7 @@ namespace motus {
 Gravity::Gravity(double G, double eps) : m_G(G), m_eps(eps) {}
 
 void Gravity::compute(BodiesView b, AccelView out) const {
-    if(m_algo == Algorithm::DIRCET_NEWTON) directNewton(b, out);    
+    if(m_algo == Algorithm::DIRECT_NEWTON) directNewton(b, out);    
     else if(m_algo == Algorithm::BARNES_HUT) barnesHut(b, out);    
 }
 
@@ -56,7 +56,7 @@ void Gravity::barnesHut(BodiesView b, AccelView out) const {
         PROFILE_SCOPE("bh/traverse");
         #pragma omp parallel for schedule(dynamic, 64)
         for(size_t i = 0; i < b.size(); ++i) {
-            out[i] = tree.traverseNode(i, 0, m_theta, m_G, m_eps) / b.m[i];
+            out[i] += tree.traverseNode(i, 0, m_theta, m_G, m_eps) / b.m[i];
         }
     }
 }
@@ -66,9 +66,12 @@ void Gravity::resetG() { m_G = s_defaultG; }
 void Gravity::setEps(double newEps) { m_eps = newEps; }
 void Gravity::resetEps() {m_eps = s_defaultEps; }
 void Gravity::setAlgorithm(Algorithm newAlgo) { m_algo = newAlgo; }
+void Gravity::setTheta(double newTheta) { m_theta = newTheta; }
+void Gravity::resetTheta() { m_theta = s_defaultTheta;}
 
 double Gravity::G() const noexcept { return m_G; }
 double Gravity::eps() const noexcept { return m_eps; }
+double Gravity::theta() const noexcept { return m_theta; }
 
 }
 

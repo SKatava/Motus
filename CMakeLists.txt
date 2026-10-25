@@ -25,6 +25,8 @@ target_compile_definitions(${NAME} PUBLIC MOTUS_PROFILE)
 
 add_subdirectory(external)
 add_subdirectory(examples)
+enable_testing()
+add_subdirectory(tests)
 
 target_link_libraries(${NAME} PUBLIC glm)
 

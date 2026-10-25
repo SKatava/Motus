@@ -10,7 +10,7 @@ void Verlet::step(BodiesView b, const ForcesFn &f, double dt) {
     if(m_acc.size() != n) {
         m_acc.resize(n);
         m_accNew.resize(n);
-        evaluate(b, f, m_accNew);
+        evaluate(b, f, m_acc);
     }
 
     for(size_t i = 0; i < n; ++i) {

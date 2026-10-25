@@ -7,7 +7,7 @@ namespace motus {
 class Gravity {
     public:
         enum class Algorithm {
-            DIRCET_NEWTON,
+            DIRECT_NEWTON,
             BARNES_HUT
         };
 
@@ -49,7 +49,7 @@ class Gravity {
         double                      m_G             = s_defaultG;
         double                      m_eps           = s_defaultEps;
         double                      m_theta         = s_defaultTheta;
-        Algorithm                   m_algo          = Algorithm::DIRCET_NEWTON;
+        Algorithm                   m_algo          = Algorithm::DIRECT_NEWTON;
         
 
         //Private function
