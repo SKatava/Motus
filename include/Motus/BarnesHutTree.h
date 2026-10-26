@@ -13,6 +13,9 @@ class BarnesHutTree {
         //Construcotors
         BarnesHutTree(BodiesView b); 
 
+        //Getters
+        [[nodiscard]] const std::vector<int>& indices() const;
+
         //Core functions
         void build();
         glm::dvec3 traverseNode(int bodyIndex, int nodeIndex, double theta, double G, double epsilon);
@@ -30,6 +33,7 @@ class BarnesHutTree {
 
         std::vector<Node>   m_nodes;
         BodiesView          m_bodies;
+        std::vector<int>    m_indices;
 
         
         //Helper functions
@@ -39,6 +43,8 @@ class BarnesHutTree {
         void computeMassDistribution();
         void accumulateMass(int nodeIndex);
         void subdivide(int nodeIndex);
+        void ZOrder();
+        std::uint64_t code_zOrder(int index);
 
 };
 

@@ -1,6 +1,5 @@
 #include "Motus/Simulation.h"
 
-#include <iostream>
 #include <random>
 #include <vector>
 
@@ -24,7 +23,7 @@ void generateBodies(size_t n, Bodies& b) {
 
 int main(void) {
     Bodies b;
-    generateBodies(10'000, b);
+    generateBodies(100'000, b);
 
     motus::Simulation sim(motus::IntegratorMethod::VERLET);
     sim.gravity().setAlgorithm(motus::Gravity::Algorithm::BARNES_HUT);

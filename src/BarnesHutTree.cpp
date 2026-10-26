@@ -4,6 +4,7 @@
 
 #include <glm/glm.hpp>
 #include <cmath>
+#include <cstdint>
 
 
 namespace motus {
@@ -24,13 +25,21 @@ BarnesHutTree::BarnesHutTree(BodiesView b) : m_bodies(b) {
 
     m_nodes[0].size   = glm::max(diff.x, glm::max(diff.y, diff.z)) * 1.01 +1e-9;
     m_nodes[0].center = (min + max) * 0.5;
+
+    for(size_t i {}; i < m_bodies.size(); ++i) {
+        m_indices.push_back(i);
+    }
+    {
+        PROFILE_SCOPE("bh/zOrder");
+        ZOrder();
+    }
 }
 
 void BarnesHutTree::build() {
     {
         PROFILE_SCOPE("bh/build");
         for(size_t i = 0; i < m_bodies.size(); ++i) {
-            insertToNode(i, 0);
+            insertToNode(m_indices[i], 0);
         }
     }
     {
@@ -146,6 +155,33 @@ glm::dvec3 BarnesHutTree::traverseNode(int bodyIndex, int nodeIndex, double thet
 
     return glm::dvec3 {0.0};
 }
+
+void BarnesHutTree::ZOrder() {
+    std::vector<std::uint64_t> codes;
+    for(size_t i {}; i < m_indices.size(); ++i) {
+        codes.push_back(code_zOrder(i));
+    }
+    std::sort(m_indices.begin(), m_indices.end(), [&codes](int a, int b) {
+        return codes[a] < codes[b];
+    }); 
+}
+
+std::uint64_t BarnesHutTree::code_zOrder(int index) {
+    glm::dvec3 min = m_nodes[0].center - m_nodes[0].size / 2;
+    double chunk = m_nodes[0].size / (1 << 21);
+    std::uint64_t x = (m_bodies.pos[index].x - min.x) / chunk;
+    std::uint64_t y = (m_bodies.pos[index].y - min.y) / chunk;
+    std::uint64_t z = (m_bodies.pos[index].z - min.z) / chunk;
+    std::uint64_t code = 0;
+    for(int n {}; n < 21; ++n) {
+        code |= ((x >> n) & 1) << (3*n+2);
+        code |= ((y >> n) & 1) << (3*n+1);
+        code |= ((z >> n) & 1) << (3*n);
+    }
+    return code;
+}
+
+const std::vector<int>& BarnesHutTree::indices() const { return m_indices; }
 
 }
 
