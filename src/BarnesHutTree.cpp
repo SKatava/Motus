@@ -1,15 +1,16 @@
 #include "Motus/BarnesHutTree.h"
 
+
 #include "Motus/Profiler.h"
 
 #include <glm/glm.hpp>
 #include <cmath>
-#include <cstdint>
-
 
 namespace motus {
 
 BarnesHutTree::BarnesHutTree(BodiesView b) : m_bodies(b) {
+    if(m_bodies.size() == 0) return;
+
     m_nodes.reserve(4 * m_bodies.size() + 8);
     m_nodes.emplace_back();
 
@@ -36,48 +37,10 @@ BarnesHutTree::BarnesHutTree(BodiesView b) : m_bodies(b) {
 }
 
 void BarnesHutTree::build() {
-    {
-        PROFILE_SCOPE("bh/build");
-        for(size_t i = 0; i < m_bodies.size(); ++i) {
-            insertToNode(m_indices[i], 0);
-        }
-    }
-    {
-        PROFILE_SCOPE("bh/accumulate"); 
-        accumulateMass(0);
-    }
-}
+    if(m_bodies.size() == 0) return;
 
-void BarnesHutTree::insertToNode(int bodyIndex, int nodeIndex) {
-
-    //Internal node
-    if(m_nodes[nodeIndex].firstChild != -1) {
-        int child = m_nodes[nodeIndex].firstChild + getQuadrant(bodyIndex, nodeIndex);
-        insertToNode(bodyIndex, child);
-        return;
-    }
-
-    //empty leaf
-    if(m_nodes[nodeIndex].body == -1) {
-        m_nodes[nodeIndex].body = bodyIndex;
-        return;
-    }
-
-    //full leaf
-    int existing = m_nodes[nodeIndex].body;
-    m_nodes[nodeIndex].body = -1;
-    subdivide(nodeIndex);
-    insertToNode(existing, nodeIndex);
-    insertToNode(bodyIndex, nodeIndex);
-}
-
-int BarnesHutTree::getQuadrant(int bodyIndex, int nodeIndex) {
-    glm::dvec3& center = m_nodes[nodeIndex].center;
-    glm::dvec3& pos = m_bodies.pos[bodyIndex];
-
-    return  (pos.x > center.x) << 2 |
-            (pos.y > center.y) << 1 |
-            (pos.z > center.z);
+    buildNode(0, 0, m_bodies.size(), 0);
+    accumulateMass(0);
 }
 
 glm::dvec3 BarnesHutTree::getCenter(int nodeIndex, int quad) {
@@ -88,6 +51,33 @@ glm::dvec3 BarnesHutTree::getCenter(int nodeIndex, int quad) {
         c.y + ((quad & 2) ? off : -off),
         c.z + ((quad & 1) ? off : -off)
     );
+}
+
+void BarnesHutTree::accumulateMass(int nodeIndex) {
+    glm::dvec3 weighted {0.0};
+    double M = 0;
+
+    if(m_nodes[nodeIndex].firstChild == -1) {
+        Node& node = m_nodes[nodeIndex];
+        for(int i = node.first; i < node.first + node.count; ++i) {
+            M += m_bodies.m[m_indices[i]];
+            weighted += m_bodies.m[m_indices[i]] * m_bodies.pos[m_indices[i]];
+        }
+    }
+
+    else {
+        int first = m_nodes[nodeIndex].firstChild;
+
+        for(size_t i = 0; i < 8; ++i) {
+            accumulateMass(first + i);
+            M += m_nodes[first + i].mass;
+            weighted += m_nodes[first + i].mass * m_nodes[first + i].cm;
+        }
+    }
+
+    m_nodes[nodeIndex].mass = M;
+    m_nodes[nodeIndex].cm = (M > 0.0) ? (weighted / M) : m_nodes[nodeIndex].center;
+
 }
 
 void BarnesHutTree::subdivide(int nodeIndex) {
@@ -105,40 +95,56 @@ void BarnesHutTree::subdivide(int nodeIndex) {
     m_nodes[nodeIndex].firstChild = first;
 }
 
-void BarnesHutTree::accumulateMass(int nodeIndex) {
-    if(m_nodes[nodeIndex].body != -1) {
-        m_nodes[nodeIndex].mass = m_bodies.m[m_nodes[nodeIndex].body];
-        m_nodes[nodeIndex].cm = m_bodies.pos[m_nodes[nodeIndex].body];
+void BarnesHutTree::buildNode(int nodeIndex, int begin, int end, int depth) {
+    m_nodes[nodeIndex].first = begin;
+    m_nodes[nodeIndex].count = end - begin;
+
+    if(end - begin <= s_bucketSize || depth == 21) {
         return;
-    } 
-
-    if(m_nodes[nodeIndex].firstChild != -1) {
-        int first = m_nodes[nodeIndex].firstChild;
-        glm::dvec3 weighted {0.0};
-        double M = 0;
-
-        for(size_t i = 0; i < 8; ++i) {
-            accumulateMass(first + i);
-            M += m_nodes[first + i].mass;
-            weighted += m_nodes[first + i].mass * m_nodes[first + i].cm;
-        }
-
-        m_nodes[nodeIndex].mass = M;
-        m_nodes[nodeIndex].cm = (M > 0.0) ? (weighted / M) : m_nodes[nodeIndex].center;
     }
+
+    subdivide(nodeIndex);
+    int firstChild = m_nodes[nodeIndex].firstChild;
+
+    std::uint8_t shift = 3 * (20-depth);
+    int i = begin;
+
+    for(int j {}; j < 8; ++j) {
+        int start = i;
+        while(i < end && j == ((m_codes[i] >> shift) & 7)) {
+            ++i;
+        }
+        buildNode(firstChild + j, start, i, depth + 1);
+    }
+
+    
+
 }
 
 glm::dvec3 BarnesHutTree::traverseNode(int bodyIndex, int nodeIndex, double theta, double G, double epsilon) {
-    const glm::dvec3 diff = m_nodes[nodeIndex].cm - m_bodies.pos[bodyIndex]; 
-    const double d2 = glm::dot(diff, diff) + epsilon*epsilon;
-    const double invD3 = 1.0 / (d2 * std::sqrt(d2));
+    glm::dvec3 diff; 
+    double d2;
+    double invD3;
+    glm::dvec3 force {0.0};
 
-    if(m_nodes[nodeIndex].body != -1) {
-        if(m_nodes[nodeIndex].body == bodyIndex) return glm::dvec3 {0.0};
+    if(m_nodes[nodeIndex].firstChild == -1) {
+        Node& node = m_nodes[nodeIndex];
 
-        return G * m_nodes[nodeIndex].mass * m_bodies.m[bodyIndex] * invD3 * diff;
+        for(int i = node.first; i < node.first + node.count; ++i) {
+             
+            if(m_indices[i] == bodyIndex) continue;
+
+            diff = m_bodies.pos[m_indices[i]] - m_bodies.pos[bodyIndex]; 
+            d2 = glm::dot(diff, diff) + epsilon*epsilon;
+            invD3 = 1.0 / (d2 * std::sqrt(d2));
+
+            force += G * m_bodies.m[m_indices[i]] * m_bodies.m[bodyIndex] * invD3 * diff; 
+        }
     }
-    else if(m_nodes[nodeIndex].firstChild != -1) {
+    else {
+        diff = m_nodes[nodeIndex].cm - m_bodies.pos[bodyIndex]; 
+        d2 = glm::dot(diff, diff) + epsilon*epsilon;
+        invD3 = 1.0 / (d2 * std::sqrt(d2));
         const double d = std::sqrt(d2);
 
         glm::dvec3 r = m_bodies.pos[bodyIndex] - m_nodes[nodeIndex].center;
@@ -146,24 +152,28 @@ glm::dvec3 BarnesHutTree::traverseNode(int bodyIndex, int nodeIndex, double thet
             return G * m_nodes[nodeIndex].mass * m_bodies.m[bodyIndex] * invD3 * diff;
         }
 
-        glm::dvec3 force {0.0};
         for(int i = 0; i < 8; ++i) {
             force += traverseNode(bodyIndex, m_nodes[nodeIndex].firstChild + i, theta, G, epsilon);
         }
-        return force;
     }
-
-    return glm::dvec3 {0.0};
+    
+    return force;
 }
 
 void BarnesHutTree::ZOrder() {
     std::vector<std::uint64_t> codes;
+   
     for(size_t i {}; i < m_indices.size(); ++i) {
         codes.push_back(code_zOrder(i));
     }
+
     std::sort(m_indices.begin(), m_indices.end(), [&codes](int a, int b) {
         return codes[a] < codes[b];
-    }); 
+    });
+
+    for(size_t i {}; i < m_indices.size(); ++i) {
+        m_codes.push_back(codes[m_indices[i]]); 
+    }
 }
 
 std::uint64_t BarnesHutTree::code_zOrder(int index) {
@@ -183,5 +193,5 @@ std::uint64_t BarnesHutTree::code_zOrder(int index) {
 
 const std::vector<int>& BarnesHutTree::indices() const { return m_indices; }
 
-}
 
+}
