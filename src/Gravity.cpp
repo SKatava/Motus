@@ -50,6 +50,7 @@ double Gravity::potentialEnergy(BodiesView b) const {
 
 
 void Gravity::barnesHut(BodiesView b, AccelView out) const {
+    if(b.size() == 0) return;
     BarnesHutTree tree(b);
     tree.build();
     const std::vector<int>& indices = tree.indices();

@@ -14,4 +14,5 @@ target_link_libraries(${NAME}-tests
         GTest::gtest_main
 )
 
-gtest_discover_tests(${NAME}-tests)
+#Degenerate tree inputs can recurse forever; fail fast instead of waiting for ctest's 1500 s default
+gtest_discover_tests(${NAME}-tests PROPERTIES TIMEOUT 10)
