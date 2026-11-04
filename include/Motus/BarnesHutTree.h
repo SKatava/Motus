@@ -11,17 +11,6 @@ namespace motus {
 
 class BarnesHutTree {
     public:
-        //Construcotors
-        BarnesHutTree(BodiesView b); 
-
-        //Getters
-        [[nodiscard]] const std::vector<int>& indices() const;
-
-        //Core functions
-        void build();
-        glm::dvec3 traverseNode(int bodyIndex, int nodeIndex, double theta, double G, double epsilon);
-    private:
-        
         struct Node {
             double      mass {};            //8     bytes
             glm::dvec3  cm{};               //24    bytes
@@ -29,11 +18,23 @@ class BarnesHutTree {
             double      size;               //8     bytes
             int         first {-1};         //4     bytes
             int         firstChild {-1};    //4     bytes
-            int         count {};           //4     bytes   =   74 bytes! => compiler padds to 80
- 
+            int         count {};           //4     bytes   =   76 bytes! => compiler padds to 80
         };
 
-        static constexpr int s_bucketSize {1};
+        //Construcotors
+        BarnesHutTree(BodiesView b); 
+
+        //Getters
+        [[nodiscard]] const std::vector<int>& indices() const;
+        [[nodiscard]] const std::vector<Node>& nodes() const;
+        [[nodiscard]] const glm::dvec3& rootCenter() const;
+
+        //Core functions
+        void build();
+        glm::dvec3 traverseNode(int bodyIndex, int nodeIndex, double theta, double G, double epsilon);
+    
+    private:
+        static constexpr int s_bucketSize {16};
 
         std::vector<Node>           m_nodes;
         BodiesView                  m_bodies;

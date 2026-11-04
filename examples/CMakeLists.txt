@@ -5,3 +5,5 @@ function(motus_example)
 endfunction()
 
 motus_example(NAME 01_BHT SOURCES 01_BHT/main.cpp)
+motus_example(NAME 02_DirectGPU SOURCES 02_DirectGPU/main.cpp)
+motus_example(NAME 03_BHT_GPU SOURCES 03_BHT_GPU/main.cpp)

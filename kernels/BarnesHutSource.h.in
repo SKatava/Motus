@@ -1,0 +1,7 @@
+#pragma once
+
+namespace motus::ocl::kernels {
+
+inline constexpr const char* barnesHut = R"CLC(@BARNESHUT_SOURCE@)CLC";
+
+}
