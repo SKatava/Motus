@@ -38,16 +38,18 @@ class BarnesHutKernel {
             cl_int4 meta;
         };
 
-        std::shared_ptr<Device> m_device;
-        Program m_program;
-        Kernel m_kernel;
-        Buffer m_posMass;
-        Buffer m_nodes;
-        Buffer m_acc;
-        size_t m_capacity {};
-        size_t m_capacityNode {};
-        std::vector<cl_float4> m_staging;
-        std::vector<GpuNode> m_stagingNodes;
+        constexpr static size_t s_groupSize        {64};
+
+        std::shared_ptr<Device> m_device        ;
+        Program                 m_program       ;
+        Kernel                  m_kernel        ;
+        Buffer                  m_posMass       ;
+        Buffer                  m_nodes         ;
+        Buffer                  m_acc           ;
+        size_t                  m_capacity      {};
+        size_t                  m_capacityNode  {};
+        std::vector<cl_float4>  m_staging       ;
+        std::vector<GpuNode>    m_stagingNodes  ;
 
         //Private helpers
         void ensureCapacity(std::size_t n);

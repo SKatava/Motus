@@ -33,12 +33,12 @@ class GravityKernel {
 
     private:
         std::shared_ptr<Device> m_device;
-        Program m_program;
-        Kernel m_kernel;
-        Buffer m_posMass;
-        Buffer m_acc;
-        size_t m_capacity {};
-        std::vector<cl_float4> m_staging;
+        Program                 m_program;
+        Kernel                  m_kernel;
+        Buffer                  m_posMass;
+        Buffer                  m_acc;
+        size_t                  m_capacity {};
+        std::vector<cl_float4>  m_staging;
 
         //Private helpers
         void ensureCapacity(std::size_t n);

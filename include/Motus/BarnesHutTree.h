@@ -25,28 +25,28 @@ class BarnesHutTree {
         BarnesHutTree(BodiesView b); 
 
         //Getters
-        [[nodiscard]] const std::vector<int>& indices() const;
-        [[nodiscard]] const std::vector<Node>& nodes() const;
-        [[nodiscard]] const glm::dvec3& rootCenter() const;
+        [[nodiscard]] const std::vector<int>&   indices() const;
+        [[nodiscard]] const std::vector<Node>&  nodes() const;
+        [[nodiscard]] const glm::dvec3&         rootCenter() const;
 
         //Core functions
-        void build();
-        glm::dvec3 traverseNode(int bodyIndex, int nodeIndex, double theta, double G, double epsilon);
+        void        build();
+        glm::dvec3  traverseNode(int bodyIndex, int nodeIndex, double theta, double G, double epsilon);
     
     private:
-        static constexpr int s_bucketSize {16};
+        static constexpr int s_bucketSize {32};
 
         std::vector<Node>           m_nodes;
         BodiesView                  m_bodies;
         std::vector<int>            m_indices;
         std::vector<std::uint64_t>  m_codes;
 
-        void buildNode(int nodeIndex, int begin, int end, int depth);
-        glm::dvec3 getCenter(int nodeIndex, int quad);
-        void subdivide(int nodeIndex);
-        void accumulateMass(int nodeIndex);
-        void ZOrder();
-        std::uint64_t code_zOrder(int index);
+        void            buildNode(int nodeIndex, int begin, int end, int depth);
+        glm::dvec3      getCenter(int nodeIndex, int quad);
+        void            subdivide(int nodeIndex);
+        void            accumulateMass(int nodeIndex);
+        void            ZOrder();
+        std::uint64_t   code_zOrder(int index);
 };
 
 }

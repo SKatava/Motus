@@ -3,9 +3,11 @@
 #include <glm/glm.hpp>
 
 #include <string>
+#include <limits>
 
 #include "Motus/ocl/kernels/BarnesHutSource.h"
 #include "Motus/BarnesHutTree.h"
+#include "Motus/Profiler.h"
 
 namespace motus::ocl {
 
@@ -62,7 +64,10 @@ void BarnesHutKernel::ensureCapacityNodes(std::size_t n) {
 void BarnesHutKernel::compute(BodiesView b, AccelView out, double G, double eps, double theta) {
     if(b.size() == 0) return;
     BarnesHutTree tree(b);
-    tree.build();
+    {
+        PROFILE_SCOPE("BHT-GPU/build");
+        tree.build();
+    }
     
     size_t n = b.size();
     size_t nNode = tree.nodes().size();
@@ -74,6 +79,7 @@ void BarnesHutKernel::compute(BodiesView b, AccelView out, double G, double eps,
     glm::dvec3 center = tree.rootCenter();
     const std::vector<int>& indices = tree.indices();
 
+
     for(size_t i {}; i < n; ++i) {
         glm::dvec3 rel = b.pos[indices[i]] - center;
         m_staging[i].s[0] = static_cast<float>(rel.x);
@@ -81,6 +87,7 @@ void BarnesHutKernel::compute(BodiesView b, AccelView out, double G, double eps,
         m_staging[i].s[2] = static_cast<float>(rel.z);
         m_staging[i].s[3] = static_cast<float>(b.m[indices[i]]);
     }
+
 
     const std::vector<BarnesHutTree::Node>& nodes = tree.nodes();
     for(size_t i {}; i < nNode; ++i) {
@@ -119,8 +126,9 @@ void BarnesHutKernel::compute(BodiesView b, AccelView out, double G, double eps,
     check(clSetKernelArg(m_kernel.get(), 5, sizeof(cl_float), &rawEps2), "clSetKernelArg");
     check(clSetKernelArg(m_kernel.get(), 6, sizeof(cl_float), &rawTheta2), "clSetKernelArg");
 
-    size_t global = n;
-    check(clEnqueueNDRangeKernel(m_device->queue(), m_kernel.get(), 1, nullptr, &global, nullptr, 0, nullptr, nullptr), "clEnqueueNDRangeKernel");
+    size_t global = (n + s_groupSize - 1)/s_groupSize * s_groupSize;
+    size_t local = s_groupSize;
+    check(clEnqueueNDRangeKernel(m_device->queue(), m_kernel.get(), 1, nullptr, &global, &local, 0, nullptr, nullptr), "clEnqueueNDRangeKernel");
 
     check(clEnqueueReadBuffer(m_device->queue(), m_acc.get(), CL_TRUE, 0, n * sizeof(cl_float4), m_staging.data(), 0, nullptr, nullptr), "clEnqueueReadBuffer");
 
