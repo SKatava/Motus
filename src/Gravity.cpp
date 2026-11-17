@@ -11,6 +11,8 @@ Gravity::Gravity(double G, double eps) : m_G(G), m_eps(eps) {}
 void Gravity::compute(BodiesView b, AccelView out) const {
     if(m_algo == Algorithm::DIRECT_NEWTON) directNewton(b, out);    
     else if(m_algo == Algorithm::BARNES_HUT) barnesHut(b, out);    
+    else if(m_algo == Algorithm::DIRECT_GPU) directGPU(b, out);   
+    else if(m_algo == Algorithm::BARNES_HUT_GPU) barnesHutGPU(b, out);
 }
 
 double Gravity::potentialEnergy(BodiesView b) const {
@@ -63,11 +65,36 @@ void Gravity::barnesHut(BodiesView b, AccelView out) const {
     }
 }
 
+void Gravity::directGPU(BodiesView b, AccelView out) const {
+    {
+        PROFILE_SCOPE("directGPU/compute");
+        m_kernelDirect->compute(b, out, m_G, m_eps);
+    }
+}
+
+void Gravity::barnesHutGPU(BodiesView b, AccelView out) const {
+    {
+        PROFILE_SCOPE("BHT-GPU/compute");
+        m_kernelBarnesHut->compute(b, out, m_G, m_eps, m_theta);
+    }
+
+}
+
 void Gravity::setG(double newG) { m_G = newG; }
 void Gravity::resetG() { m_G = s_defaultG; }
 void Gravity::setEps(double newEps) { m_eps = newEps; }
 void Gravity::resetEps() {m_eps = s_defaultEps; }
-void Gravity::setAlgorithm(Algorithm newAlgo) { m_algo = newAlgo; }
+void Gravity::setAlgorithm(Algorithm newAlgo) { 
+    if(newAlgo == Algorithm::DIRECT_GPU) {
+        if(m_device == nullptr) m_device = std::make_shared<ocl::Device>(); 
+        if(m_kernelDirect == nullptr) m_kernelDirect = std::make_shared<ocl::GravityKernel>(m_device);
+    }
+    else if(newAlgo == Algorithm::BARNES_HUT_GPU) {
+        if(m_device == nullptr) m_device = std::make_shared<ocl::Device>(); 
+        if(m_kernelBarnesHut == nullptr) m_kernelBarnesHut = std::make_shared<ocl::BarnesHutKernel>(m_device);
+    }
+    m_algo = newAlgo; 
+}
 void Gravity::setTheta(double newTheta) { m_theta = newTheta; }
 void Gravity::resetTheta() { m_theta = s_defaultTheta;}
 

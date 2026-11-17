@@ -1,6 +1,10 @@
 #pragma once
 
+#include <memory>
+
 #include "Bodies.h"
+#include "Motus/ocl/GravityKernel.h"
+#include "Motus/ocl/BarnesHutKernel.h"
 
 namespace motus {
 
@@ -8,7 +12,9 @@ class Gravity {
     public:
         enum class Algorithm {
             DIRECT_NEWTON,
-            BARNES_HUT
+            BARNES_HUT,
+            DIRECT_GPU,
+            BARNES_HUT_GPU
         };
 
         //Constructors
@@ -25,8 +31,8 @@ class Gravity {
         ~Gravity() = default;
 
         //Core functions
-        void compute(BodiesView b, std::span<glm::dvec3> out) const;
-        [[nodiscard]] double potentialEnergy(BodiesView b) const;
+        void                    compute(BodiesView b, std::span<glm::dvec3> out) const;
+        [[nodiscard]] double    potentialEnergy(BodiesView b) const;
         
         //Setters
         void setG           (double newG);
@@ -43,18 +49,23 @@ class Gravity {
         [[nodiscard]] double theta()    const noexcept;
 
     private:
-        static constexpr double     s_defaultG      = 6.674e-11;
-        static constexpr double     s_defaultEps    = 1e-3;
-        static constexpr double     s_defaultTheta  = 0.5;
-        double                      m_G             = s_defaultG;
-        double                      m_eps           = s_defaultEps;
-        double                      m_theta         = s_defaultTheta;
-        Algorithm                   m_algo          = Algorithm::DIRECT_NEWTON;
+        static constexpr double                 s_defaultG          = 6.674e-11;
+        static constexpr double                 s_defaultEps        = 1e-3;
+        static constexpr double                 s_defaultTheta      = 0.5;
+        double                                  m_G                 = s_defaultG;
+        double                                  m_eps               = s_defaultEps;
+        double                                  m_theta             = s_defaultTheta;
+        Algorithm                               m_algo              = Algorithm::DIRECT_NEWTON;
+        std::shared_ptr<ocl::Device>            m_device            ;
+        std::shared_ptr<ocl::GravityKernel>     m_kernelDirect      ;
+        std::shared_ptr<ocl::BarnesHutKernel>   m_kernelBarnesHut   ;
         
 
         //Private function
         void directNewton(BodiesView b, AccelView out) const;
         void barnesHut(BodiesView b, AccelView out) const;
+        void directGPU(BodiesView b, AccelView out) const;
+        void barnesHutGPU(BodiesView b, AccelView out) const;
 };
 
 }

@@ -6,6 +6,7 @@ add_executable(${NAME}-tests
     IntegratorTest.cpp
     SimulationTest.cpp
     ProfilerTest.cpp
+    OclGravityTest.cpp
 )
 
 target_link_libraries(${NAME}-tests
