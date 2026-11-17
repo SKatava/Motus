@@ -27,6 +27,7 @@ int main(void) {
 
     motus::Simulation sim(motus::IntegratorMethod::VERLET);
     sim.gravity().setAlgorithm(motus::Gravity::Algorithm::BARNES_HUT_GPU);
+    sim.gravity().setTheta(0.7);
     size_t step = 1;
     
 
