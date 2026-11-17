@@ -36,10 +36,11 @@ class BarnesHutTree {
     private:
         static constexpr int s_bucketSize {32};
 
-        std::vector<Node>           m_nodes;
-        BodiesView                  m_bodies;
-        std::vector<int>            m_indices;
-        std::vector<std::uint64_t>  m_codes;
+        std::vector<Node>                           m_nodes;
+        BodiesView                                  m_bodies;
+        std::vector<int>                            m_indices;
+        std::vector<std::pair<std::uint64_t, int>>  m_sortBuffer;
+        std::vector<std::uint64_t>                  m_codes;
 
         void            buildNode(int nodeIndex, int begin, int end, int depth);
         glm::dvec3      getCenter(int nodeIndex, int quad);

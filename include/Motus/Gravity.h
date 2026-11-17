@@ -51,7 +51,7 @@ class Gravity {
     private:
         static constexpr double                 s_defaultG          = 6.674e-11;
         static constexpr double                 s_defaultEps        = 1e-3;
-        static constexpr double                 s_defaultTheta      = 0.7;
+        static constexpr double                 s_defaultTheta      = 0.5;
         double                                  m_G                 = s_defaultG;
         double                                  m_eps               = s_defaultEps;
         double                                  m_theta             = s_defaultTheta;

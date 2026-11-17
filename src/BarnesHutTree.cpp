@@ -5,6 +5,7 @@
 
 #include <glm/glm.hpp>
 #include <cmath>
+#include <parallel/algorithm>
 
 namespace motus {
 
@@ -168,33 +169,37 @@ glm::dvec3 BarnesHutTree::traverseNode(int bodyIndex, int nodeIndex, double thet
 }
 
 void BarnesHutTree::ZOrder() {
-    std::vector<std::uint64_t> codes;
-    codes.reserve(m_bodies.size());
-   
-    for(size_t i {}; i < m_indices.size(); ++i) {
-        codes.emplace_back(code_zOrder(i));
+    m_codes.resize(m_bodies.size());
+    m_indices.resize(m_bodies.size());
+    m_sortBuffer.resize(m_bodies.size());
+  
+
+    #pragma omp parallel for schedule(dynamic, 64)
+    for(size_t i = 0; i < m_bodies.size(); ++i) {
+        m_sortBuffer[i] = {code_zOrder(i), i};
     }
 
-    std::sort(m_indices.begin(), m_indices.end(), [&codes](int a, int b) {
-        return codes[a] < codes[b];
-    });
+    //Needs to be Radix Sort
+    __gnu_parallel::sort(m_sortBuffer.begin(), m_sortBuffer.end());
 
-    for(size_t i {}; i < m_indices.size(); ++i) {
-        m_codes.push_back(codes[m_indices[i]]); 
+    #pragma omp parallel for schedule(dynamic, 64)
+    for(size_t i = 0; i < m_bodies.size(); ++i) {
+        m_codes[i] = m_sortBuffer[i].first; 
+        m_indices[i] = m_sortBuffer[i].second; 
     }
 }
 
 std::uint64_t BarnesHutTree::code_zOrder(int index) {
     glm::dvec3 min = m_nodes[0].center - m_nodes[0].size / 2;
-    double chunk = m_nodes[0].size / (1 << 21);
+    double chunk = m_nodes[0].size / (1ULL << 21);
     std::uint64_t x = (m_bodies.pos[index].x - min.x) / chunk;
     std::uint64_t y = (m_bodies.pos[index].y - min.y) / chunk;
     std::uint64_t z = (m_bodies.pos[index].z - min.z) / chunk;
     std::uint64_t code = 0;
     for(int n {}; n < 21; ++n) {
-        code |= ((x >> n) & 1) << (3*n+2);
-        code |= ((y >> n) & 1) << (3*n+1);
-        code |= ((z >> n) & 1) << (3*n);
+        code |= ((x >> n) & 1ULL) << (3*n+2);
+        code |= ((y >> n) & 1ULL) << (3*n+1);
+        code |= ((z >> n) & 1ULL) << (3*n);
     }
     return code;
 }
